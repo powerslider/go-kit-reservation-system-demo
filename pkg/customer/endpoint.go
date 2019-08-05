@@ -30,7 +30,7 @@ type unregisterCustomerResponse struct {
 	Err error `json:"err,omitempty"`
 }
 
-func (r unregisterCustomerResponse) error() error { return r.Err }
+func (r unregisterCustomerResponse) HTTPError() error { return r.Err }
 
 func MakeUnregisterCustomerEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -51,7 +51,7 @@ type registerCustomerResponse struct {
 	Err      error     `json:"err,omitempty"`
 }
 
-func (r registerCustomerResponse) error() error { return r.Err }
+func (r registerCustomerResponse) HTTPError() error { return r.Err }
 
 func MakeRegisterCustomerEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -74,7 +74,7 @@ type getAllCustomersResponse struct {
 	Err       error      `json:"err,omitempty"`
 }
 
-func (r getAllCustomersResponse) error() error { return r.Err }
+func (r getAllCustomersResponse) HTTPError() error { return r.Err }
 
 func MakeGetAllCustomersEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -99,7 +99,7 @@ type getCustomerByIDResponse struct {
 	Err      error    `json:"err,omitempty"`
 }
 
-func (r getCustomerByIDResponse) error() error { return r.Err }
+func (r getCustomerByIDResponse) HTTPError() error { return r.Err }
 
 func MakeGetCustomerByIDEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
