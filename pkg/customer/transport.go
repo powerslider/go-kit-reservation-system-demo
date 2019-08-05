@@ -13,8 +13,7 @@ import (
 	"strconv"
 )
 
-func MakeHTTPHandler(s Service, logger log.Logger) http.Handler {
-	r := mux.NewRouter()
+func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
 	e := MakeServerEndpoints(s)
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),

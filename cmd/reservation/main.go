@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-kit/kit/log"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"os/signal"
 	"reservations/pkg/customer"
+	"reservations/pkg/reservation"
 	"reservations/pkg/storage"
 	"syscall"
 )
@@ -24,28 +26,13 @@ func main() {
 		panic(err)
 	}
 
-	var logger log.Logger
-	{
-		logger = log.NewLogfmtLogger(os.Stderr)
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-		logger = log.With(logger, "caller", log.DefaultCaller)
-	}
+	logger := log.NewLogfmtLogger(os.Stderr)
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	logger = log.With(logger, "caller", log.DefaultCaller)
 
-	var r customer.Repository
-	{
-		r = customer.NewCustomerRepository(*db)
-	}
-
-	var s customer.Service
-	{
-		s = customer.NewCustomerService(r)
-		s = customer.LoggingMiddleware(logger)(s)
-	}
-
-	var h http.Handler
-	{
-		h = customer.MakeHTTPHandler(s, log.With(logger, "component", "HTTP"))
-	}
+	r := mux.NewRouter()
+	r = initCustomerHandler(r, db, logger)
+	r = initReservationHandler(r, db, logger)
 
 	errs := make(chan error)
 	go func() {
@@ -56,8 +43,22 @@ func main() {
 
 	go func() {
 		logger.Log("transport", "HTTP", "addr", *httpAddr)
-		errs <- http.ListenAndServe(*httpAddr, h)
+		errs <- http.ListenAndServe(*httpAddr, r)
 	}()
 
 	logger.Log("exit", <-errs)
+}
+
+func initCustomerHandler(router *mux.Router, db *storage.Persistence, logger log.Logger) *mux.Router {
+	r := customer.NewCustomerRepository(*db)
+	s := customer.NewCustomerService(r)
+	s = customer.LoggingMiddleware(logger)(s)
+	return customer.MakeHTTPHandler(router, s, log.With(logger, "component", "HTTP"))
+}
+
+func initReservationHandler(router *mux.Router, db *storage.Persistence, logger log.Logger) *mux.Router {
+	r := reservation.NewReservationRepository(*db)
+	s := reservation.NewReservationService(r)
+	s = reservation.LoggingMiddleware(logger)(s)
+	return reservation.MakeHTTPHandler(router, s, log.With(logger, "component", "HTTP"))
 }
