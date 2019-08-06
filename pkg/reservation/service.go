@@ -13,11 +13,11 @@ type Service interface {
 }
 
 type Reservation struct {
-	ReservationID   int `json:"reservationId" db:"rid" goqu:"skipinsert"`
+	ReservationID   int    `json:"reservationId" db:"rid" goqu:"skipinsert"`
 	SeatCount       int    `json:"seatCount" db:"seat_count"`
 	StartTime       string `json:"startTime" db:"start_time"`
 	ReservationName string `json:"reservationName" db:"reservation_name"`
-	CustomerID      int `json:"customerId" db:"customer_id"`
+	CustomerID      int    `json:"customerId" db:"customer_id"`
 	Phone           string `json:"phone"`
 	Comments        string `json:"comments"`
 	Created         int64  `json:"created"`

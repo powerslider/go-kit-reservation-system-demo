@@ -43,7 +43,7 @@ func MakeDiscardReservationEndpoint(s Service) endpoint.Endpoint {
 }
 
 type bookReservationRequest struct {
-	CustomerID int
+	CustomerID  int
 	Reservation *Reservation
 }
 
