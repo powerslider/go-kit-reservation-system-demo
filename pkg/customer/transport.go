@@ -8,9 +8,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
-	errors "reservations/pkg/error"
 	"reservations/pkg/transport"
-	"strconv"
 )
 
 func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
@@ -64,27 +62,24 @@ func decodeRegisterCustomerRequest(_ context.Context, r *http.Request) (request 
 }
 
 func decodeUnregisterCustomerRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, errors.ValidationError.Newf("missing or invalid customer ID %s", id)
+	id, err := httpjson.ParseIntPathParam(r, "id", "customer ID")
+	if err != nil {
+		return nil, err
 	}
 	return unregisterCustomerRequest{CustomerID: id}, nil
 }
 
 func decodeGetCustomerByIDRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, errors.ValidationError.Newf("missing or invalid customer ID %s", id)
+	id, err := httpjson.ParseIntPathParam(r, "id", "customer ID")
+	if err != nil {
+		return nil, err
 	}
 	return getCustomerByIDRequest{CustomerID: id}, nil
 }
 
 func decodeGetAllCustomersRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	q := r.URL.Query()
-	limit, _ := strconv.ParseUint(q.Get("limit"), 10, 64)
-	offset, _ := strconv.ParseUint(q.Get("offset"), 10, 64)
-
-	return getAllCustomersRequest{Limit: uint(limit), Offset: uint(offset)}, nil
+	return getAllCustomersRequest{
+		Limit:  httpjson.ParseUintQueryParam(r, "limit"),
+		Offset: httpjson.ParseUintQueryParam(r, "offset"),
+	}, nil
 }

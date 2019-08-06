@@ -7,18 +7,19 @@ import (
 
 type Service interface {
 	RegisterCustomer(ctx context.Context, c *Customer) (*Customer, error)
-	UnregisterCustomer(ctx context.Context, cID string) error
+	UnregisterCustomer(ctx context.Context, cID int) error
 	GetAllCustomers(ctx context.Context, opts *storage.QueryOptions) ([]Customer, error)
-	GetCustomerByID(ctx context.Context, cID string) (Customer, error)
+	GetCustomerByID(ctx context.Context, cID int) (Customer, error)
 }
 
 type Customer struct {
-	CustomerID string `json:"customerId" db:"cid" goqu:"skipinsert"`
-	FirstName  string `json:"firstName" db:"first_name"`
-	LastName   string `json:"lastName" db:"last_name"`
-	Email      string `json:"email"`
-	Phone      string `json:"phone"`
-	Created    int64  `json:"created"`
+	CustomerID  int    `json:"customerId" db:"cid" goqu:"skipinsert"`
+	FirstName   string `json:"firstName" db:"first_name"`
+	LastName    string `json:"lastName" db:"last_name"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	Created     int64  `json:"created"`
+	LastUpdated int64  `json:"lastUpdated" db:"last_updated"`
 }
 
 type customerService struct {
@@ -39,7 +40,7 @@ func (s *customerService) RegisterCustomer(ctx context.Context, c *Customer) (*C
 	return res, nil
 }
 
-func (s *customerService) UnregisterCustomer(ctx context.Context, cID string) error {
+func (s *customerService) UnregisterCustomer(ctx context.Context, cID int) error {
 	err := s.custRepo.RemoveCustomer(cID)
 	if err != nil {
 		return err
@@ -55,7 +56,7 @@ func (s *customerService) GetAllCustomers(ctx context.Context, opts *storage.Que
 	return cc, nil
 }
 
-func (s *customerService) GetCustomerByID(ctx context.Context, cID string) (Customer, error) {
+func (s *customerService) GetCustomerByID(ctx context.Context, cID int) (Customer, error) {
 	c, err := s.custRepo.FindCustomerByID(cID)
 	if err != nil {
 		return c, err

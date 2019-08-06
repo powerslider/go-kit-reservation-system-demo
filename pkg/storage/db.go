@@ -45,20 +45,22 @@ func NewDB(dbName string) (*Persistence, error) {
 	}, nil
 }
 
-func (p *Persistence) Tx(txFunc Transaction) error {
+func (p *Persistence) Tx(txFunc Transaction) (res sql.Result, err error) {
 	tx, err := p.DB.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = tx.Wrap(func() error {
-		if _, e := txFunc(tx).Exec(); e != nil {
+		r, e := txFunc(tx).Exec()
+		if e != nil {
 			return e
 		}
+		res = r
 		return nil
 	})
 
-	return nil
+	return res, nil
 }
 
 func fileExists(filename string) bool {

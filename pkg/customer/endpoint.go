@@ -23,7 +23,7 @@ func MakeServerEndpoints(s Service) Endpoints {
 }
 
 type unregisterCustomerRequest struct {
-	CustomerID string
+	CustomerID int
 }
 
 type unregisterCustomerResponse struct {
@@ -91,7 +91,7 @@ func MakeGetAllCustomersEndpoint(s Service) endpoint.Endpoint {
 }
 
 type getCustomerByIDRequest struct {
-	CustomerID string
+	CustomerID int
 }
 
 type getCustomerByIDResponse struct {

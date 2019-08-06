@@ -9,10 +9,10 @@ import (
 )
 
 type Repository interface {
-	AddReservation(r *Reservation) (*Reservation, error)
-	RemoveReservation(rID string) error
-	UpdateReservation(rID string) (Reservation, error)
-	FindReservationsByCustomerID(cID string, opts *storage.QueryOptions) ([]Reservation, error)
+	AddReservation(cID int, r *Reservation) (*Reservation, error)
+	RemoveReservation(rID int) error
+	UpdateReservation(rID int, r *Reservation) (Reservation, error)
+	FindReservationsByCustomerID(cID int, opts *storage.QueryOptions) ([]Reservation, error)
 }
 
 type reservationRepository struct {
@@ -23,32 +23,56 @@ func NewReservationRepository(db storage.Persistence) Repository {
 	return &reservationRepository{db: db}
 }
 
-func (r *reservationRepository) AddReservation(res *Reservation) (*Reservation, error) {
+func (r *reservationRepository) AddReservation(cID int, res *Reservation) (*Reservation, error) {
 	created := time.Now().Unix()
 
-	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+	result, err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
 		res.Created = created
+		res.LastUpdated = created
+		res.CustomerID = cID
 		return tx.From("reservation").Insert(res)
-	}); err != nil {
+	})
+
+	if err != nil {
 		return nil, errors.DBError.Wrap(err, "error adding new reservation")
 	}
+
+	rID, _ := result.LastInsertId()
+	res.ReservationID = int(rID)
 
 	return res, nil
 }
 
-func (r *reservationRepository) RemoveReservation(rID string) error {
-	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+func (r *reservationRepository) RemoveReservation(rID int) error {
+	_, err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
 		return tx.From("reservation").Where(goqu.Ex{"rid": rID}).Delete()
-	}); err != nil {
-		return errors.DBError.Wrapf(err, "error deleting reservation with ID %s", rID)
+	})
+
+	if err != nil {
+		return errors.DBError.Wrapf(err, "error deleting reservation with ID %d", rID)
 	}
 	return nil
 }
 
-func (r *reservationRepository) UpdateReservation(rID string) (Reservation, error) {
-	return Reservation{}, nil
+func (r *reservationRepository) UpdateReservation(rID int, res *Reservation) (result Reservation, err error) {
+	lastUpdated := time.Now().Unix()
+
+	_, err = r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+		res.LastUpdated = lastUpdated
+		return tx.From("reservation").Update(res)
+	})
+
+	_, err = r.db.DB.From("reservation").Where(
+		goqu.C("rid").Eq(rID),
+	).ScanStruct(&result)
+
+	if err != nil {
+		return result, errors.DBError.Wrapf(err, "error updating reservation with ID %d", rID)
+	}
+
+	return result, nil
 }
 
-func (r *reservationRepository) FindReservationsByCustomerID(cID string, opts *storage.QueryOptions) ([]Reservation, error) {
+func (r *reservationRepository) FindReservationsByCustomerID(cID int, opts *storage.QueryOptions) ([]Reservation, error) {
 	return nil, nil
 }

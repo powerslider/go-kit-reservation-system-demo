@@ -8,9 +8,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
-	errors "reservations/pkg/error"
 	"reservations/pkg/transport"
-	"strconv"
 )
 
 func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
@@ -20,7 +18,7 @@ func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
 		httptransport.ServerErrorEncoder(httpjson.EncodeError),
 	}
 
-	r.Methods("POST").Path("/reservation").
+	r.Methods("POST").Path("/customer/{id}/reservation").
 		Handler(httptransport.NewServer(
 			e.BookReservationEndpoint,
 			decodeBookReservationRequest,
@@ -38,8 +36,8 @@ func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
 
 	r.Methods("PUT").Path("/reservation/{id}").
 		Handler(httptransport.NewServer(
-			e.ChangeReservationEndpoint,
-			decodeChangeReservationRequest,
+			e.EditReservationEndpoint,
+			decodeEditReservationRequest,
 			httpjson.EncodeResponse,
 			options...,
 		))
@@ -57,6 +55,13 @@ func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
 
 func decodeBookReservationRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	var req bookReservationRequest
+
+	id, err := httpjson.ParseIntPathParam(r, "id", "customer ID")
+	if err != nil {
+		return nil, err
+	}
+	req.CustomerID = id
+
 	if e := json.NewDecoder(r.Body).Decode(&req.Reservation); e != nil {
 		return nil, e
 	}
@@ -64,22 +69,22 @@ func decodeBookReservationRequest(_ context.Context, r *http.Request) (request i
 }
 
 func decodeDiscardReservationRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, errors.ValidationError.Newf("missing or invalid reservation ID %s", id)
+	id, err := httpjson.ParseIntPathParam(r, "id", "reservation ID")
+	if err != nil {
+		return nil, err
 	}
 	return discardReservationRequest{ReservationID: id}, nil
 }
 
-func decodeChangeReservationRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, errors.ValidationError.Newf("missing or invalid reservation ID %s", id)
-	}
+func decodeEditReservationRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var req editReservationRequest
 
-	var req changeReservationRequest
+	id, err := httpjson.ParseIntPathParam(r, "id", "reservation ID")
+	if err != nil {
+		return nil, err
+	}
+	req.ReservationID = id
+
 	if e := json.NewDecoder(r.Body).Decode(&req.Reservation); e != nil {
 		return nil, e
 	}
@@ -87,19 +92,14 @@ func decodeChangeReservationRequest(_ context.Context, r *http.Request) (request
 }
 
 func decodeGetReservationHistoryPerCustomerRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, errors.ValidationError.Newf("missing or invalid customer ID %s", id)
+	id, err := httpjson.ParseIntPathParam(r, "id", "customer ID")
+	if err != nil {
+		return nil, err
 	}
-
-	q := r.URL.Query()
-	limit, _ := strconv.ParseUint(q.Get("limit"), 10, 64)
-	offset, _ := strconv.ParseUint(q.Get("offset"), 10, 64)
 
 	return getReservationHistoryPerCustomerRequest{
 		CustomerID: id,
-		Limit:      uint(limit),
-		Offset:     uint(offset),
+		Limit:      httpjson.ParseUintQueryParam(r, "limit"),
+		Offset:     httpjson.ParseUintQueryParam(r, "offset"),
 	}, nil
 }

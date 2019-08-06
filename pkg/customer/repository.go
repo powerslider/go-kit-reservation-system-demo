@@ -15,9 +15,9 @@ const (
 
 type Repository interface {
 	AddCustomer(c *Customer) (*Customer, error)
-	RemoveCustomer(cID string) error
+	RemoveCustomer(cID int) error
 	FindAllCustomers(opts *storage.QueryOptions) ([]Customer, error)
-	FindCustomerByID(cID string) (Customer, error)
+	FindCustomerByID(cID int) (Customer, error)
 }
 
 type customerRepository struct {
@@ -31,21 +31,28 @@ func NewCustomerRepository(db storage.Persistence) Repository {
 func (r *customerRepository) AddCustomer(c *Customer) (*Customer, error) {
 	created := time.Now().Unix()
 
-	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+	result, err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
 		c.Created = created
+		c.LastUpdated = created
 		return tx.From("customer").Insert(c)
-	}); err != nil {
+	});
+	if err != nil {
 		return nil, errors.DBError.Wrap(err, "error adding new customer")
 	}
+
+	cID, _ := result.LastInsertId()
+	c.CustomerID = int(cID)
 
 	return c, nil
 }
 
-func (r *customerRepository) RemoveCustomer(cID string) error {
-	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+func (r *customerRepository) RemoveCustomer(cID int) error {
+	_, err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
 		return tx.From("customer").Where(goqu.Ex{"cid": cID}).Delete()
-	}); err != nil {
-		return errors.DBError.Wrapf(err, "error deleting customers with id %s", cID)
+	})
+
+	if err != nil {
+		return errors.DBError.Wrapf(err, "error deleting customers with id %d", cID)
 	}
 	return nil
 }
@@ -64,18 +71,18 @@ func (r *customerRepository) FindAllCustomers(opts *storage.QueryOptions) ([]Cus
 	return cc, nil
 }
 
-func (r *customerRepository) FindCustomerByID(cID string) (c Customer, err error) {
+func (r *customerRepository) FindCustomerByID(cID int) (c Customer, err error) {
 	found, err := r.db.DB.From("customer").Where(
 		goqu.C("cid").Eq(cID),
 	).ScanStruct(&c)
 
 	if !found {
-		return c, errors.NotFound.Newf("customer with ID %s not found", cID).
+		return c, errors.NotFound.Newf("customer with ID %d not found", cID).
 			AddContext("CustomerID", "non existent ID")
 	}
 
 	if err != nil {
-		return c, errors.DBError.Wrapf(err, "error getting customer with ID %s", cID)
+		return c, errors.DBError.Wrapf(err, "error getting customer with ID %d", cID)
 	}
 
 	return c, nil

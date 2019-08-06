@@ -31,7 +31,7 @@ func (mw loggingMiddleware) RegisterCustomer(ctx context.Context, c *Customer) (
 	return mw.next.RegisterCustomer(ctx, c)
 }
 
-func (mw loggingMiddleware) UnregisterCustomer(ctx context.Context, cID string) (err error) {
+func (mw loggingMiddleware) UnregisterCustomer(ctx context.Context, cID int) (err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "UnregisterCustomer", "id", cID, "took", time.Since(begin), "err", err)
 	}(time.Now())
@@ -45,7 +45,7 @@ func (mw loggingMiddleware) GetAllCustomers(ctx context.Context, opts *storage.Q
 	return mw.next.GetAllCustomers(ctx, opts)
 }
 
-func (mw loggingMiddleware) GetCustomerByID(ctx context.Context, cID string) (result Customer, err error) {
+func (mw loggingMiddleware) GetCustomerByID(ctx context.Context, cID int) (result Customer, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "GetCustomerByID", "id", cID, "took", time.Since(begin), "err", err)
 	}(time.Now())

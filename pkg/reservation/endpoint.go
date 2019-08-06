@@ -9,7 +9,7 @@ import (
 type Endpoints struct {
 	BookReservationEndpoint                 endpoint.Endpoint
 	DiscardReservationEndpoint              endpoint.Endpoint
-	ChangeReservationEndpoint               endpoint.Endpoint
+	EditReservationEndpoint                 endpoint.Endpoint
 	GetReservationHistoryByCustomerEndpoint endpoint.Endpoint
 }
 
@@ -17,13 +17,13 @@ func MakeServerEndpoints(s Service) Endpoints {
 	return Endpoints{
 		BookReservationEndpoint:                 MakeBookReservationEndpoint(s),
 		DiscardReservationEndpoint:              MakeDiscardReservationEndpoint(s),
-		ChangeReservationEndpoint:               MakeChangeReservationEndpoint(s),
+		EditReservationEndpoint:                 MakeEditReservationEndpoint(s),
 		GetReservationHistoryByCustomerEndpoint: MakeGetReservationHistoryPerCustomerEndpoint(s),
 	}
 }
 
 type discardReservationRequest struct {
-	ReservationID string
+	ReservationID int
 }
 
 type discardReservationResponse struct {
@@ -43,6 +43,7 @@ func MakeDiscardReservationEndpoint(s Service) endpoint.Endpoint {
 }
 
 type bookReservationRequest struct {
+	CustomerID int
 	Reservation *Reservation
 }
 
@@ -56,7 +57,7 @@ func (r bookReservationResponse) HTTPError() error { return r.Err }
 func MakeBookReservationEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(bookReservationRequest)
-		r, e := s.BookReservation(ctx, req.Reservation)
+		r, e := s.BookReservation(ctx, req.CustomerID, req.Reservation)
 		return bookReservationResponse{
 			Reservation: r,
 			Err:         e,
@@ -65,7 +66,7 @@ func MakeBookReservationEndpoint(s Service) endpoint.Endpoint {
 }
 
 type getReservationHistoryPerCustomerRequest struct {
-	CustomerID string
+	CustomerID int
 	Limit      uint
 	Offset     uint
 }
@@ -91,23 +92,23 @@ func MakeGetReservationHistoryPerCustomerEndpoint(s Service) endpoint.Endpoint {
 	}
 }
 
-type changeReservationRequest struct {
-	ReservationID string
-	Reservation   Reservation
+type editReservationRequest struct {
+	ReservationID int
+	Reservation   *Reservation
 }
 
-type changeReservationResponse struct {
+type editReservationResponse struct {
 	Reservation Reservation `json:"reservation"`
 	Err         error       `json:"err,omitempty"`
 }
 
-func (r changeReservationResponse) HTTPError() error { return r.Err }
+func (r editReservationResponse) HTTPError() error { return r.Err }
 
-func MakeChangeReservationEndpoint(s Service) endpoint.Endpoint {
+func MakeEditReservationEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req := request.(changeReservationRequest)
-		r, e := s.ChangeReservation(ctx, req.ReservationID)
-		return changeReservationResponse{
+		req := request.(editReservationRequest)
+		r, e := s.EditReservation(ctx, req.ReservationID, req.Reservation)
+		return editReservationResponse{
 			Reservation: r,
 			Err:         e,
 		}, nil

@@ -6,20 +6,22 @@ import (
 )
 
 type Service interface {
-	BookReservation(ctx context.Context, r *Reservation) (*Reservation, error)
-	DiscardReservation(ctx context.Context, rID string) error
-	ChangeReservation(ctx context.Context, rID string) (Reservation, error)
-	GetReservationHistoryPerCustomer(ctx context.Context, cID string, opts *storage.QueryOptions) ([]Reservation, error)
+	BookReservation(ctx context.Context, cID int, r *Reservation) (*Reservation, error)
+	DiscardReservation(ctx context.Context, rID int) error
+	EditReservation(ctx context.Context, rID int, r *Reservation) (Reservation, error)
+	GetReservationHistoryPerCustomer(ctx context.Context, cID int, opts *storage.QueryOptions) ([]Reservation, error)
 }
 
 type Reservation struct {
-	ReservationID   int    `json:"reservationId" db:"rid" goqu:"skipinsert"`
+	ReservationID   int `json:"reservationId" db:"rid" goqu:"skipinsert"`
 	SeatCount       int    `json:"seatCount" db:"seat_count"`
 	StartTime       string `json:"startTime" db:"start_time"`
 	ReservationName string `json:"reservationName" db:"reservation_name"`
+	CustomerID      int `json:"customerId" db:"customer_id"`
 	Phone           string `json:"phone"`
 	Comments        string `json:"comments"`
 	Created         int64  `json:"created"`
+	LastUpdated     int64  `json:"lastUpdated" db:"last_updated"`
 }
 
 type reservationService struct {
@@ -32,15 +34,15 @@ func NewReservationService(repo Repository) Service {
 	}
 }
 
-func (s *reservationService) BookReservation(ctx context.Context, r *Reservation) (*Reservation, error) {
-	res, err := s.resRepo.AddReservation(r)
+func (s *reservationService) BookReservation(ctx context.Context, cID int, r *Reservation) (*Reservation, error) {
+	res, err := s.resRepo.AddReservation(cID, r)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (s *reservationService) DiscardReservation(ctx context.Context, rID string) error {
+func (s *reservationService) DiscardReservation(ctx context.Context, rID int) error {
 	err := s.resRepo.RemoveReservation(rID)
 	if err != nil {
 		return err
@@ -48,15 +50,15 @@ func (s *reservationService) DiscardReservation(ctx context.Context, rID string)
 	return nil
 }
 
-func (s *reservationService) ChangeReservation(ctx context.Context, rID string) (r Reservation, err error) {
-	r, err = s.resRepo.UpdateReservation(rID)
+func (s *reservationService) EditReservation(ctx context.Context, rID int, res *Reservation) (r Reservation, err error) {
+	r, err = s.resRepo.UpdateReservation(rID, res)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func (s *reservationService) GetReservationHistoryPerCustomer(ctx context.Context, cID string, opts *storage.QueryOptions) ([]Reservation, error) {
+func (s *reservationService) GetReservationHistoryPerCustomer(ctx context.Context, cID int, opts *storage.QueryOptions) ([]Reservation, error) {
 	rr, err := s.resRepo.FindReservationsByCustomerID(cID, opts)
 	if err != nil {
 		return nil, err
