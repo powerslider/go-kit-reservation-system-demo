@@ -1,6 +1,12 @@
 package reservation
 
-import "reservations/pkg/storage"
+import (
+	"github.com/doug-martin/goqu/v7"
+	"github.com/doug-martin/goqu/v7/exec"
+	errors "reservations/pkg/error"
+	"reservations/pkg/storage"
+	"time"
+)
 
 type Repository interface {
 	AddReservation(r *Reservation) (*Reservation, error)
@@ -18,10 +24,24 @@ func NewReservationRepository(db storage.Persistence) Repository {
 }
 
 func (r *reservationRepository) AddReservation(res *Reservation) (*Reservation, error) {
+	created := time.Now().Unix()
+
+	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+		res.Created = created
+		return tx.From("reservation").Insert(res)
+	}); err != nil {
+		return nil, errors.DBError.Wrap(err, "error adding new reservation")
+	}
+
 	return res, nil
 }
 
 func (r *reservationRepository) RemoveReservation(rID string) error {
+	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
+		return tx.From("reservation").Where(goqu.Ex{"rid": rID}).Delete()
+	}); err != nil {
+		return errors.DBError.Wrapf(err, "error deleting reservation with ID %s", rID)
+	}
 	return nil
 }
 

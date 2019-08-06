@@ -13,7 +13,7 @@ type Service interface {
 }
 
 type Customer struct {
-	CustomerID string `json:"customerId" db:"cid"`
+	CustomerID string `json:"customerId" db:"cid" goqu:"skipinsert"`
 	FirstName  string `json:"firstName" db:"first_name"`
 	LastName   string `json:"lastName" db:"last_name"`
 	Email      string `json:"email"`

@@ -32,18 +32,11 @@ func (r *customerRepository) AddCustomer(c *Customer) (*Customer, error) {
 	created := time.Now().Unix()
 
 	if err := r.db.Tx(func(tx *goqu.TxDatabase) exec.QueryExecutor {
-		records := goqu.Record{
-			"first_name": c.FirstName,
-			"last_name":  c.LastName,
-			"email":      c.Email,
-			"phone":      c.Phone,
-			"created":    created,
-		}
-		return tx.From("customer").Insert(records)
+		c.Created = created
+		return tx.From("customer").Insert(c)
 	}); err != nil {
 		return nil, errors.DBError.Wrap(err, "error adding new customer")
 	}
-	c.Created = created
 
 	return c, nil
 }
