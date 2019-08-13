@@ -26,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	logger := log.NewLogfmtLogger(os.Stderr)
+	logger := log.NewLogfmtLogger(os.Stdout)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.With(logger, "caller", log.DefaultCaller)
 
@@ -53,12 +53,12 @@ func initCustomerHandler(router *mux.Router, db *storage.Persistence, logger log
 	r := customer.NewCustomerRepository(*db)
 	s := customer.NewCustomerService(r)
 	s = customer.LoggingMiddleware(logger)(s)
-	return customer.MakeHTTPHandler(router, s, log.With(logger, "component", "HTTP"))
+	return customer.MakeHTTPHandler(router, s, logger)
 }
 
 func initReservationHandler(router *mux.Router, db *storage.Persistence, logger log.Logger) *mux.Router {
 	r := reservation.NewReservationRepository(*db)
 	s := reservation.NewReservationService(r)
 	s = reservation.LoggingMiddleware(logger)(s)
-	return reservation.MakeHTTPHandler(router, s, log.With(logger, "component", "HTTP"))
+	return reservation.MakeHTTPHandler(router, s, logger)
 }

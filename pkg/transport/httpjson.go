@@ -3,6 +3,9 @@ package httpjson
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/transport"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
 	errors "reservations/pkg/error"
@@ -39,11 +42,35 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(codeFrom(err))
-	// jsonErr, _ := json.Marshal(err)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+
+	if e := json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err,
-	})
-	// json.NewEncoder(w).Encode(err)
+	}); e != nil {
+		panic(err)
+	}
+}
+
+func HTTPRequestFinalizer(logger log.Logger) httptransport.ServerFinalizerFunc {
+	return func(ctx context.Context, code int, r *http.Request) {
+		route := r.URL.Path
+		query := r.URL.RawQuery
+
+		var keyvals []interface{}
+		keyvals = append(keyvals, "proto", r.Proto, "method", r.Method, "route", route, "status_code", code)
+		if len(query) > 0 {
+			keyvals = append(keyvals, "query", query)
+		}
+
+		logger.Log(keyvals...)
+	}
+}
+
+func DefaultServerOptions(logger log.Logger) []httptransport.ServerOption {
+	return []httptransport.ServerOption{
+		httptransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+		httptransport.ServerErrorEncoder(EncodeError),
+		httptransport.ServerFinalizer(HTTPRequestFinalizer(logger)),
+	}
 }
 
 func ParseIntPathParam(req *http.Request, paramName string, paramDesc string) (int, error) {

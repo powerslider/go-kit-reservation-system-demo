@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -13,10 +12,8 @@ import (
 
 func MakeHTTPHandler(r *mux.Router, s Service, logger log.Logger) *mux.Router {
 	e := MakeServerEndpoints(s)
-	options := []httptransport.ServerOption{
-		httptransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
-		httptransport.ServerErrorEncoder(httpjson.EncodeError),
-	}
+
+	options := httpjson.DefaultServerOptions(logger)
 
 	r.Methods("POST").Path("/customer/{id}/reservation").
 		Handler(httptransport.NewServer(
