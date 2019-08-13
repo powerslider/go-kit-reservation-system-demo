@@ -73,6 +73,21 @@ func (r *reservationRepository) UpdateReservation(rID int, res *Reservation) (re
 	return result, nil
 }
 
-func (r *reservationRepository) FindReservationsByCustomerID(cID int, opts *storage.QueryOptions) ([]Reservation, error) {
-	return nil, nil
+func (r *reservationRepository) FindReservationsByCustomerID(cID int, opts *storage.QueryOptions) (rr []Reservation, err error) {
+	err = r.db.DB.From("reservation").
+		Select("reservation.*").
+		Join(
+			goqu.T("customer"),
+			goqu.On(goqu.Ex{
+				"reservation.customer_id": goqu.I("customer.cid"),
+			})).
+		Order(goqu.C("last_updated").Desc()).
+		Limit(opts.Limit).
+		Offset(opts.Offset).
+		ScanStructs(&rr)
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching reservations for customer with ID %d", cID)
+	}
+	return rr, nil
 }
