@@ -5,15 +5,30 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
+	"github.com/swaggo/http-swagger"
 	"net/http"
 	"os"
 	"os/signal"
+	_ "reservations/docs"
 	"reservations/pkg/customer"
 	"reservations/pkg/reservation"
 	"reservations/pkg/storage"
 	"syscall"
 )
 
+// @title Reservation System API
+// @version 1.0
+// @description Demo service demonstrating Go-Kit.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Tsvetan Dimitrov
+// @contact.email tsvetan.dimitrov23@gmail.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 
 	var (
@@ -31,6 +46,11 @@ func main() {
 	logger = log.With(logger, "caller", log.DefaultCaller)
 
 	r := mux.NewRouter()
+
+	r.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), // The url pointing to API definition"
+	))
+
 	r = initCustomerHandler(r, db, logger)
 	r = initReservationHandler(r, db, logger)
 

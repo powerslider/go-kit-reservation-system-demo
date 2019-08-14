@@ -1,0 +1,116 @@
+basePath: /
+definitions:
+  customer.Customer:
+    properties:
+      created:
+        type: integer
+      customerId:
+        type: integer
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      lastUpdated:
+        type: integer
+      phone:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: tsvetan.dimitrov23@gmail.com
+    name: Tsvetan Dimitrov
+  description: Demo service demonstrating Go-Kit.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Reservation System API
+  version: "1.0"
+paths:
+  /customer:
+    post:
+      consumes:
+      - application/json
+      description: Register a new Customer
+      parameters:
+      - description: New Customer
+        in: body
+        name: customer
+        required: true
+        schema:
+          $ref: '#/definitions/customer.Customer'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/customer.Customer'
+            type: object
+      summary: Register a new Customer
+      tags:
+      - customer
+  /customer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Unregister an existing customer
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      summary: Unregister an existing customer
+      tags:
+      - customer
+    get:
+      consumes:
+      - application/json
+      description: Get an existing customer
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      summary: Get an existing customer
+      tags:
+      - customer
+  /customers:
+    get:
+      consumes:
+      - application/json
+      description: List existing customers
+      parameters:
+      - default: 100
+        description: Customer count limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Customer count offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/customer.Customer'
+            type: array
+      summary: List existing customers
+      tags:
+      - customer
+swagger: "2.0"
