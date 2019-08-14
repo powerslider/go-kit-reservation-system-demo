@@ -17,6 +17,27 @@ definitions:
       phone:
         type: string
     type: object
+  reservation.Reservation:
+    properties:
+      comments:
+        type: string
+      created:
+        type: integer
+      customerId:
+        type: integer
+      lastUpdated:
+        type: integer
+      phone:
+        type: string
+      reservationId:
+        type: integer
+      reservationName:
+        type: string
+      seatCount:
+        type: integer
+      startTime:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -85,6 +106,39 @@ paths:
       summary: Get an existing customer
       tags:
       - customer
+  /customer/{id}/reservations:
+    get:
+      consumes:
+      - application/json
+      description: List existing reservations per customer ordered by newest.
+      parameters:
+      - default: 100
+        description: Reservation count limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Reservation count offset
+        in: query
+        name: offset
+        type: integer
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/reservation.Reservation'
+            type: array
+      summary: List existing reservations per customer ordered by newest.
+      tags:
+      - reservation
   /customers:
     get:
       consumes:
@@ -113,4 +167,59 @@ paths:
       summary: List existing customers
       tags:
       - customer
+  /reservation:
+    post:
+      consumes:
+      - application/json
+      description: Book a new Reservation
+      parameters:
+      - description: New Reservation
+        in: body
+        name: reservation
+        required: true
+        schema:
+          $ref: '#/definitions/reservation.Reservation'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/reservation.Reservation'
+            type: object
+      summary: Book a new Reservation
+      tags:
+      - reservation
+  /reservation/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Discard an existing reservation
+      parameters:
+      - description: Reservation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      summary: Discard an existing reservation
+      tags:
+      - reservation
+    put:
+      consumes:
+      - application/json
+      description: Edit an existing reservation
+      parameters:
+      - description: Reservation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      summary: Edit an existing reservation
+      tags:
+      - reservation
 swagger: "2.0"
