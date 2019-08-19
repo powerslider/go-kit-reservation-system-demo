@@ -57,13 +57,15 @@ func (r *customerRepository) RemoveCustomer(cID int) error {
 	return nil
 }
 
-func (r *customerRepository) FindAllCustomers(opts *storage.QueryOptions) ([]Customer, error) {
+func (r *customerRepository) FindAllCustomers(opts *storage.QueryOptions) (cc []Customer, err error) {
 	if opts.Limit == 0 {
 		opts.Limit = defaultLimit
 	}
 
-	var cc []Customer
-	err := r.db.DB.From("customer").Limit(opts.Limit).Offset(opts.Offset).ScanStructs(&cc)
+	err = r.db.DB.From("customer").
+		Limit(opts.Limit).
+		Offset(opts.Offset).
+		ScanStructs(&cc)
 
 	if err != nil {
 		return nil, errors.DBError.Wrapf(err, "error getting all customers")

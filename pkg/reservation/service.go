@@ -35,33 +35,17 @@ func NewReservationService(repo Repository) Service {
 }
 
 func (s *reservationService) BookReservation(ctx context.Context, cID int, r *Reservation) (*Reservation, error) {
-	res, err := s.resRepo.AddReservation(cID, r)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return s.resRepo.AddReservation(cID, r)
 }
 
 func (s *reservationService) DiscardReservation(ctx context.Context, rID int) error {
-	err := s.resRepo.RemoveReservation(rID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.resRepo.RemoveReservation(rID)
 }
 
 func (s *reservationService) EditReservation(ctx context.Context, rID int, res *Reservation) (r Reservation, err error) {
-	r, err = s.resRepo.UpdateReservation(rID, res)
-	if err != nil {
-		return r, err
-	}
-	return r, nil
+	return s.resRepo.UpdateReservation(rID, res)
 }
 
 func (s *reservationService) GetReservationHistoryPerCustomer(ctx context.Context, cID int, opts *storage.QueryOptions) ([]Reservation, error) {
-	rr, err := s.resRepo.FindReservationsByCustomerID(cID, opts)
-	if err != nil {
-		return nil, err
-	}
-	return rr, nil
+	return s.resRepo.FindReservationsByCustomerID(cID, opts)
 }

@@ -33,33 +33,17 @@ func NewCustomerService(repo Repository) Service {
 }
 
 func (s *customerService) RegisterCustomer(ctx context.Context, c *Customer) (*Customer, error) {
-	res, err := s.custRepo.AddCustomer(c)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return s.custRepo.AddCustomer(c)
 }
 
 func (s *customerService) UnregisterCustomer(ctx context.Context, cID int) error {
-	err := s.custRepo.RemoveCustomer(cID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.custRepo.RemoveCustomer(cID)
 }
 
 func (s *customerService) GetAllCustomers(ctx context.Context, opts *storage.QueryOptions) ([]Customer, error) {
-	cc, err := s.custRepo.FindAllCustomers(opts)
-	if err != nil {
-		return nil, err
-	}
-	return cc, nil
+	return s.custRepo.FindAllCustomers(opts)
 }
 
 func (s *customerService) GetCustomerByID(ctx context.Context, cID int) (Customer, error) {
-	c, err := s.custRepo.FindCustomerByID(cID)
-	if err != nil {
-		return c, err
-	}
-	return c, nil
+	return s.custRepo.FindCustomerByID(cID)
 }
